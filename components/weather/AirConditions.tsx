@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useWeather } from '@/contexts/WeatherContext';
-import { formatTemperature, getUVDescription } from '@/lib/weather-utils';
+import { formatTemperature } from '@/lib/weather-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Thermometer, Droplets, Wind, Sun } from 'lucide-react';
@@ -16,7 +16,7 @@ export function AirConditions() {
       <Card className="shadow-md">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-semibold text-gray-900">
+            <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               AIR CONDITIONS
             </CardTitle>
             <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
@@ -33,12 +33,12 @@ export function AirConditions() {
               { label: 'UV Index', icon: Sun, color: 'text-yellow-600' }
             ].map((condition, index) => (
               <div key={index} className="flex items-center gap-3">
-                <div className={`p-2 rounded-lg bg-gray-100 ${condition.color}`}>
+                <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-700 ${condition.color}`}>
                   <condition.icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm text-gray-600">{condition.label}</div>
-                  <div className="font-semibold text-gray-400">-.-</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">{condition.label}</div>
+                  <div className="font-semibold text-gray-400 dark:text-gray-500">-.-</div>
                 </div>
               </div>
             ))}
@@ -48,30 +48,30 @@ export function AirConditions() {
     );
   }
 
-  const weather = currentWeather.data[0];
+  const weather = currentWeather.current;
 
   const conditions = [
     {
       label: 'Real Feel',
-      value: `${formatTemperature(weather.app_temp)}°C`,
+      value: `${formatTemperature(weather.apparent_temperature)}°C`,
       icon: Thermometer,
       color: 'text-orange-600'
     },
     {
       label: 'Chance of Rain',
-      value: `${weather.precip > 0 ? Math.round(weather.precip * 100) : 0}%`,
+      value: `${weather.precipitation > 0 ? Math.round(weather.precipitation * 100) : 0}%`,
       icon: Droplets,
       color: 'text-blue-600'
     },
     {
       label: 'Wind',
-      value: `${(weather.wind_spd * 3.6).toFixed(1)} km/h`,
+      value: `${weather.wind_speed_10m.toFixed(1)} km/h`,
       icon: Wind,
       color: 'text-gray-600'
     },
     {
-      label: 'UV Index',
-      value: `${weather.uv} (${getUVDescription(weather.uv)})`,
+      label: 'Cloud Cover',
+      value: `${weather.cloud_cover}%`,
       icon: Sun,
       color: 'text-yellow-600'
     }
@@ -81,7 +81,7 @@ export function AirConditions() {
     <Card className="shadow-md">
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold text-gray-900">
+          <CardTitle className="text-lg font-semibold text-gray-900 dark:text-gray-100">
             AIR CONDITIONS
           </CardTitle>
           <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-700">
@@ -93,12 +93,12 @@ export function AirConditions() {
         <div className="grid grid-cols-2 gap-6">
           {conditions.map((condition, index) => (
             <div key={index} className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg bg-gray-100 ${condition.color}`}>
+              <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-700 ${condition.color}`}>
                 <condition.icon className="w-5 h-5" />
               </div>
               <div>
-                <div className="text-sm text-gray-600">{condition.label}</div>
-                <div className="font-semibold text-gray-900">{condition.value}</div>
+                <div className="text-sm text-gray-600 dark:text-gray-400">{condition.label}</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">{condition.value}</div>
               </div>
             </div>
           ))}
