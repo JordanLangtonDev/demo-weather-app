@@ -112,6 +112,27 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* Custom horizontal scrollbar styling */
+.custom-scrollbar {
+	/* Firefox */
+	scrollbar-width: thin;
+	scrollbar-color: var(--ring) transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+	height: 8px; /* horizontal scrollbar height */
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: var(--input);
+	border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background: var(--ring);
+	border-radius: 9999px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+	background: oklch(0.5 0 0 / 0.7);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
