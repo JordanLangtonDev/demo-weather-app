@@ -1,57 +1,52 @@
 'use client';
 
-import React from 'react';
-import { useWeather } from '@/contexts/WeatherContext';
+import React, { useState } from 'react';
 import { LocationSearch } from '@/components/weather/LocationSearch';
+import { ThemeToggle } from '@/components/common/ThemeToggle';
 import { CurrentWeather } from '@/components/weather/CurrentWeather';
-import { HourlyForecast } from '@/components/weather/HourlyForecast';
-import { AirConditions } from '@/components/weather/AirConditions';
 import { SevenDayForecast } from '@/components/weather/SevenDayForecast';
-import { LoadingSpinner } from '@/components/common/LoadingSpinner';
-import { ErrorMessage } from '@/components/common/ErrorMessage';
+import { DayDetailsDrawer } from '@/components/weather/DayDetailsDrawer';
+import { useWeather } from '@/contexts/WeatherContext';
 
 export function WeatherLayout() {
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const { state } = useWeather();
-  const { loading, error, currentWeather } = state;
+  const { loading } = state;
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center min-h-[400px]">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="max-w-2xl mx-auto">
-        <ErrorMessage message={error} />
-      </div>
-    );
-  }
+  const handleDayClick = () => {
+    setIsDrawerOpen(true);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center bg-transparent p-5">
-          <LocationSearch />
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left Column - Main Weather Info */}
-            <div className="lg:col-span-2 space-y-6">
-              <CurrentWeather />
-              <HourlyForecast />
-              <AirConditions />
-            </div>
-
-            {/* Right Column - 7-Day Forecast */}
-            <div className="lg:col-span-1">
-              <SevenDayForecast />
-            </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 md:p-6">
+        <div className="max-w-7xl mx-auto flex items-center gap-6">
+          <div className="flex-1">
+            <LocationSearch />
           </div>
-      </div>
+          <div className="flex-shrink-0">
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto p-4 md:p-6">
+        <div className="space-y-6">
+          {/* Current Weather */}
+          <CurrentWeather onShowDetails={() => setIsDrawerOpen(true)} />
+          
+          {/* 7-Day Forecast */}
+          <SevenDayForecast onDayClick={handleDayClick} />
+        </div>
+      </main>
+
+      {/* Day Details Drawer */}
+      <DayDetailsDrawer 
+        open={isDrawerOpen} 
+        onOpenChange={setIsDrawerOpen} 
+      />
     </div>
   );
 }
