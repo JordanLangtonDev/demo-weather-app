@@ -2,82 +2,278 @@
 
 import React from 'react';
 import { useWeather } from '@/contexts/WeatherContext';
-import { getWeatherIcon, formatTemperature, calculateFeelsLike } from '@/lib/weather-utils';
+import { getWeatherIcon, formatTemperature } from '@/lib/weather-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Clock, Calendar } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { WeatherIcon } from '@/components/ui/weather-icon';
 
-export function CurrentWeather() {
+interface CurrentWeatherProps {
+  onShowDetails?: () => void;
+}
+
+export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
   const { state } = useWeather();
-  const { currentWeather, location } = state;
+  const { currentWeather, location, selectedDate, forecast, history, loading } = state;
 
-  const weather = currentWeather?.data[0];
-  const feelsLike = weather ? calculateFeelsLike(weather.temp, weather.rh, weather.wind_spd) : null;
+  const weather = currentWeather?.current;
+
+  // Show loading state
+  if (loading) {
+    return (
+      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
+        <CardContent className="p-8">
+          <div className="animate-pulse">
+            <div className="mb-6">
+              <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-3/4"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+            </div>
+            
+            <div className="flex items-center gap-12 mb-6">
+              <div className="flex items-baseline gap-3">
+                <div className="h-20 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+              
+              <div className="text-center">
+                <div className="h-20 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Get weather data for the selected date
+  const getSelectedDateWeather = () => {
+    if (!selectedDate || !forecast) return null;
+    
+    const today = new Date();
+    const todayString = today.toISOString().split('T')[0];
+    
+    if (selectedDate === todayString) {
+      // Return current weather for today
+      return {
+        temperature: weather?.temperature_2m,
+        weatherCode: weather?.weather_code,
+        humidity: weather?.relative_humidity_2m,
+        windSpeed: weather?.wind_speed_10m,
+        windDirection: weather?.wind_direction_10m,
+        pressure: weather?.pressure_msl,
+        precipitation: weather?.precipitation,
+        isHistorical: false,
+        time: weather?.time
+      };
+    }
+    
+    // Check if it's a historical date
+    if (history && history.daily && history.daily.time) {
+      const historyIndex = history.daily.time.findIndex(date => date === selectedDate);
+      if (historyIndex !== -1) {
+        return {
+          temperature: (history.daily.temperature_2m_max[historyIndex] + history.daily.temperature_2m_min[historyIndex]) / 2,
+          weatherCode: history.daily.weather_code[historyIndex],
+          humidity: null, // Historical data doesn't include humidity
+          windSpeed: history.daily.wind_speed_10m_max[historyIndex],
+          windDirection: history.daily.wind_direction_10m_dominant[historyIndex],
+          pressure: null, // Historical data doesn't include pressure
+          precipitation: history.daily.precipitation_sum[historyIndex],
+          isHistorical: true,
+          time: selectedDate
+        };
+      }
+    }
+    
+    // Check if it's a forecast date
+    if (forecast.daily && forecast.daily.time) {
+      const forecastIndex = forecast.daily.time.findIndex(date => date === selectedDate);
+      if (forecastIndex !== -1) {
+        return {
+          temperature: (forecast.daily.temperature_2m_max[forecastIndex] + forecast.daily.temperature_2m_min[forecastIndex]) / 2,
+          weatherCode: forecast.daily.weather_code[forecastIndex],
+          humidity: null, // Forecast daily data doesn't include humidity
+          windSpeed: forecast.daily.wind_speed_10m_max[forecastIndex],
+          windDirection: forecast.daily.wind_direction_10m_dominant[forecastIndex],
+          pressure: null, // Forecast daily data doesn't include pressure
+          precipitation: forecast.daily.precipitation_sum[forecastIndex],
+          isHistorical: false,
+          time: selectedDate
+        };
+      }
+    }
+    
+    return null;
+  };
+
+  const selectedWeather = getSelectedDateWeather();
+
+  if (!currentWeather || !weather) {
+    return (
+      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
+        <CardContent className="p-8">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">🌤️</div>
+            <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              No Weather Data
+            </h2>
+            <p className="text-gray-500 dark:text-gray-400">
+              Search for a location to see current weather
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Format the selected date for display
+  const formatSelectedDate = () => {
+    if (!selectedDate) return 'Current Weather';
+    const date = new Date(selectedDate);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) return 'Current Weather';
+    if (date.toDateString() === yesterday.toDateString()) return 'Yesterday\'s Weather';
+    return `${date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })} Weather`;
+  };
+
+  // Use selected weather data if available, otherwise fall back to current weather
+  const displayWeather = selectedWeather || {
+    temperature: weather.temperature_2m,
+    weatherCode: weather.weather_code,
+    humidity: weather.relative_humidity_2m,
+    windSpeed: weather.wind_speed_10m,
+    windDirection: weather.wind_direction_10m,
+    pressure: weather.pressure_msl,
+    precipitation: weather.precipitation,
+    isHistorical: false,
+    time: weather.time
+  };
+
+  // Ensure required props are present
+  if (
+    displayWeather.temperature === undefined ||
+    displayWeather.weatherCode === undefined ||
+    displayWeather.windSpeed === undefined ||
+    displayWeather.windDirection === undefined ||
+    !displayWeather.time
+  ) {
+    return null;
+  }
 
   return (
-    <Card className="bg-white border-0 shadow-lg">
+    <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
       <CardContent className="p-8">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="mb-6">
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">
-                {location?.city || '-.-'}
-                {location?.state && (
-                  <span className="text-2xl text-gray-600 ml-3">, {location.state}</span>
-                )}
-              </h1>
+              <div className="mb-3">
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                  {location?.city || 'Unknown Location'}
+                  {location?.state && (
+                    <span className="text-2xl text-gray-600 dark:text-gray-400 ml-3">, {location.state}</span>
+                  )}
+                </h1>
+                <div className="flex items-center gap-2 mt-2">
+                  <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">
+                    {formatSelectedDate()}
+                  </span>
+                  {displayWeather.isHistorical && (
+                    <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs">
+                      Historical
+                    </Badge>
+                  )}
+                </div>
+              </div>
               
               <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-200 text-sm px-3 py-1">
-                  Chance of rain: {weather ? (weather.precip > 0 ? Math.round(weather.precip * 100) : 0) : '-.-'}%
+                <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700 text-sm px-3 py-1">
+                  Precipitation: {displayWeather.precipitation && displayWeather.precipitation > 0 ? `${displayWeather.precipitation.toFixed(1)} mm` : '0 mm'}
                 </Badge>
               </div>
             </div>
 
             <div className="flex items-center gap-12">
               <div className="flex items-baseline gap-3">
-                <span className="text-7xl font-bold text-gray-900">
-                  {weather ? formatTemperature(weather.temp) : '-.-'}
+                <span className="text-7xl font-bold text-gray-900 dark:text-white">
+                  {formatTemperature(displayWeather.temperature)}
                 </span>
-                <span className="text-3xl text-gray-600">°C</span>
+                <span className="text-3xl text-gray-600 dark:text-gray-400">°C</span>
               </div>
               
               <div className="text-center">
                 <div className="text-7xl mb-3">
-                  {weather ? getWeatherIcon(weather.weather.icon) : '🌤️'}
+                  <WeatherIcon 
+                    icon={getWeatherIcon(displayWeather.weatherCode.toString())} 
+                    size={80}
+                    className="mx-auto"
+                  />
                 </div>
-                <p className="text-lg text-gray-600 font-medium">
-                  {weather ? weather.weather.description : '-.-'}
-                </p>
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600">
+            <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+              {displayWeather.humidity !== null && (
+                <div>
+                  <span className="font-medium">Humidity:</span> {displayWeather.humidity}%
+                </div>
+              )}
               <div>
-                <span className="font-medium">Feels like:</span> {feelsLike ? `${formatTemperature(feelsLike)}°C` : '-.-°C'}
+                <span className="font-medium">Wind:</span> {displayWeather.windSpeed.toFixed(1)} km/h {getWindDirection(displayWeather.windDirection)}
               </div>
+              {displayWeather.pressure !== null && (
+                <div>
+                  <span className="font-medium">Pressure:</span> {displayWeather.pressure} mb
+                </div>
+              )}
               <div>
-                <span className="font-medium">Humidity:</span> {weather ? `${weather.rh}%` : '-.-%'}
-              </div>
-              <div>
-                <span className="font-medium">Wind:</span> {weather ? `${weather.wind_spd.toFixed(1)} m/s ${weather.wind_cdir}` : '-.- m/s -.-'}
-              </div>
-              <div>
-                <span className="font-medium">Pressure:</span> {weather ? `${weather.pres} mb` : '-.- mb'}
+                <span className="font-medium">Precipitation:</span> {displayWeather.precipitation && displayWeather.precipitation > 0 ? `${displayWeather.precipitation.toFixed(1)} mm` : '0 mm'}
               </div>
             </div>
           </div>
 
-          <div className="text-right text-sm text-gray-500">
-            <div>Last updated</div>
-            <div className="font-medium">
-              {weather ? new Date(weather.ob_time).toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              }) : '-.-'}
+          <div className="text-right text-sm text-gray-500 dark:text-gray-400">
+            <div className="flex items-center gap-2 mb-2 justify-end">
+              <Clock className="w-4 h-4" />
+              <span>{displayWeather.isHistorical ? 'Date' : 'Last updated'}</span>
             </div>
+            <div className="font-medium mb-4">
+              {displayWeather.isHistorical 
+                ? new Date(displayWeather.time).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric' 
+                  })
+                : new Date(displayWeather.time).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })
+              }
+            </div>
+            <Button variant="outline" size="sm" onClick={onShowDetails}>
+              See more details
+            </Button>
           </div>
         </div>
       </CardContent>
     </Card>
   );
+}
+
+// Helper function to convert wind direction degrees to cardinal directions
+function getWindDirection(degrees: number): string {
+  const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+  const index = Math.round(degrees / 22.5) % 16;
+  return directions[index];
 }
