@@ -2,6 +2,8 @@
 
 A modern, responsive weather application built with Next.js 15, React 19, and TypeScript. Features real-time weather data, location search, and a beautiful dark/light theme toggle.
 
+🌐 **Live Demo**: [https://demo-weather-app-wine.vercel.app/](https://demo-weather-app-wine.vercel.app/)
+
 ## ✨ Features
 
 - **Real-time Weather Data**: Current conditions, hourly forecasts, and 7-day predictions
