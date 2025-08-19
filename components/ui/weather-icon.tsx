@@ -20,45 +20,88 @@ interface WeatherIconProps {
 }
 
 export function WeatherIcon({ icon, size = 24, className = '' }: WeatherIconProps) {
-  // Get color based on weather icon type
-  const getIconColor = (iconName: string) => {
+  // Get color and animation classes based on weather icon type
+  const getIconStyles = (iconName: string) => {
     const icon = iconName.toLowerCase();
     
-    if (icon.includes('sun')) return 'text-yellow-500 dark:text-yellow-400';
-    if (icon.includes('moon')) return 'text-indigo-400 dark:text-indigo-300';
-    if (icon.includes('cloud-sun') || icon.includes('cloud-moon')) return 'text-orange-500 dark:text-orange-400';
-    if (icon.includes('cloud') && !icon.includes('rain') && !icon.includes('snow') && !icon.includes('fog')) return 'text-gray-500 dark:text-gray-400';
-    if (icon.includes('cloud-rain')) return 'text-blue-600 dark:text-blue-400';
-    if (icon.includes('cloud-snow')) return 'text-sky-400 dark:text-sky-300';
-    if (icon.includes('cloud-fog')) return 'text-gray-400 dark:text-gray-300';
-    if (icon.includes('zap')) return 'text-yellow-500 dark:text-yellow-400';
+    if (icon.includes('sun')) {
+      return {
+        color: 'text-yellow-500 dark:text-yellow-400',
+        animation: 'animate-sun-pulse'
+      };
+    }
+    if (icon.includes('moon')) {
+      return {
+        color: 'text-indigo-400 dark:text-indigo-300',
+        animation: 'animate-moon-glow'
+      };
+    }
+    if (icon.includes('cloud-sun') || icon.includes('cloud-moon')) {
+      return {
+        color: 'text-orange-500 dark:text-orange-400',
+        animation: 'animate-cloud-float'
+      };
+    }
+    if (icon.includes('cloud') && !icon.includes('rain') && !icon.includes('snow') && !icon.includes('fog')) {
+      return {
+        color: 'text-gray-500 dark:text-gray-400',
+        animation: 'animate-cloud-float'
+      };
+    }
+    if (icon.includes('cloud-rain')) {
+      return {
+        color: 'text-blue-600 dark:text-blue-400',
+        animation: 'animate-rain-fall'
+      };
+    }
+    if (icon.includes('cloud-snow')) {
+      return {
+        color: 'text-sky-400 dark:text-sky-300',
+        animation: 'animate-snow-fall'
+      };
+    }
+    if (icon.includes('cloud-fog')) {
+      return {
+        color: 'text-gray-400 dark:text-gray-300',
+        animation: 'animate-fog-drift'
+      };
+    }
+    if (icon.includes('zap')) {
+      return {
+        color: 'text-yellow-500 dark:text-yellow-400',
+        animation: 'animate-lightning-flash'
+      };
+    }
     
-    return 'text-gray-600 dark:text-gray-400'; // Default color
+    return {
+      color: 'text-gray-600 dark:text-gray-400',
+      animation: ''
+    };
   };
   
-  const iconColor = getIconColor(icon);
+  const iconStyles = getIconStyles(icon);
   
-  // Map icon names to components
+  // Map icon names to components with animations
   switch (icon) {
     case 'sun':
-      return <Sun className={`${iconColor} ${className}`} size={size} />;
+      return <Sun className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'moon':
-      return <Moon className={`${iconColor} ${className}`} size={size} />;
+      return <Moon className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'cloud-sun':
-      return <CloudSun className={`${iconColor} ${className}`} size={size} />;
+      return <CloudSun className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'cloud-moon':
-      return <CloudMoon className={`${iconColor} ${className}`} size={size} />;
+      return <CloudMoon className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'cloud':
-      return <Cloud className={`${iconColor} ${className}`} size={size} />;
+      return <Cloud className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'cloud-rain':
-      return <CloudRain className={`${iconColor} ${className}`} size={size} />;
+      return <CloudRain className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'cloud-snow':
-      return <CloudSnow className={`${iconColor} ${className}`} size={size} />;
+      return <CloudSnow className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'cloud-fog':
-      return <CloudFog className={`${iconColor} ${className}`} size={size} />;
+      return <CloudFog className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     case 'zap':
-      return <Zap className={`${iconColor} ${className}`} size={size} />;
+      return <Zap className={`${iconStyles.color} ${iconStyles.animation} ${className}`} size={size} />;
     default:
-      return <Cloud className={`${getIconColor('cloud')} ${className}`} size={size} />;
+      return <Cloud className={`${getIconStyles('cloud').color} ${getIconStyles('cloud').animation} ${className}`} size={size} />;
   }
 }

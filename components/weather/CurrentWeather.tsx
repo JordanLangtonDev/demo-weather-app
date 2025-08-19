@@ -47,8 +47,8 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
   // Show loading state
   if (loading || (location && (currentWeatherQuery.isLoading || forecastQuery.isLoading))) {
     return (
-      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
-        <CardContent className="p-4 sm:p-6 md:p-8">
+      <Card className="border-0 shadow-lg rounded-2xl weather-gradient-cloudy">
+        <CardContent className="p-4 sm:p-6 md:p-8 relative z-10">
           <div className="animate-pulse">
             <div className="mb-6">
               <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-3/4"></div>
@@ -143,8 +143,8 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
 
   if (!currentWeather || !weather) {
     return (
-      <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
-        <CardContent className="p-4 sm:p-6 md:p-8">
+      <Card className="border-0 shadow-lg rounded-2xl weather-gradient-cloudy">
+        <CardContent className="p-4 sm:p-6 md:p-8 relative z-10">
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🌤️</div>
             <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -196,17 +196,57 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
     return null;
   }
 
+  // Get gradient class based on weather condition
+  const getWeatherGradient = (weatherCode: number, isDay: boolean) => {
+    // WMO Weather codes: https://open-meteo.com/en/docs
+    if (weatherCode >= 0 && weatherCode <= 3) {
+      // Clear sky
+      return isDay ? 'weather-gradient-sunny' : 'weather-gradient-night';
+    } else if (weatherCode >= 45 && weatherCode <= 48) {
+      // Foggy
+      return 'weather-gradient-cloudy';
+    } else if (weatherCode >= 51 && weatherCode <= 67) {
+      // Drizzle and rain
+      return 'weather-gradient-rainy';
+    } else if (weatherCode >= 71 && weatherCode <= 77) {
+      // Snow
+      return 'weather-gradient-snowy';
+    } else if (weatherCode >= 80 && weatherCode <= 82) {
+      // Rain showers
+      return 'weather-gradient-rainy';
+    } else if (weatherCode >= 85 && weatherCode <= 86) {
+      // Snow showers
+      return 'weather-gradient-snowy';
+    } else if (weatherCode >= 95 && weatherCode <= 99) {
+      // Thunderstorm
+      return 'weather-gradient-stormy';
+    } else {
+      // Default cloudy
+      return 'weather-gradient-cloudy';
+    }
+  };
+
+  const gradientClass = getWeatherGradient(displayWeather.weatherCode, displayWeather.isHistorical ? true : (currentWeather?.current.is_day === 1));
+  
+  // Debug logging
+  console.log('Weather Debug:', {
+    weatherCode: displayWeather.weatherCode,
+    isDay: displayWeather.isHistorical ? true : (currentWeather?.current.is_day === 1),
+    gradientClass,
+    displayWeather
+  });
+
   return (
-          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
-        <CardContent className="p-4 sm:p-6 md:p-8">
+    <Card className={`border-0 shadow-lg rounded-2xl ${gradientClass}`}>
+      <CardContent className="p-4 sm:p-6 md:p-8 relative z-10">
         <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
           <div className="flex-1">
             <div className="mb-6">
               <div className="mb-3">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white drop-shadow-sm">
                   {location?.city || 'Unknown Location'}
                   {location?.state && (
-                    <span className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-400 ml-2 sm:ml-3">, {location.state}</span>
+                    <span className="text-lg sm:text-xl md:text-2xl text-gray-700 dark:text-gray-300 ml-2 sm:ml-3 drop-shadow-sm">, {location.state}</span>
                   )}
                 </h1>
                 <div className="flex items-center gap-2 mt-2">
@@ -221,20 +261,14 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
                   )}
                 </div>
               </div>
-              
-              <div className="flex items-center gap-3">
-                <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700 text-sm px-3 py-1">
-                  Precipitation: {displayWeather.precipitation && displayWeather.precipitation > 0 ? `${displayWeather.precipitation.toFixed(1)} mm` : '0 mm'}
-                </Badge>
-              </div>
             </div>
 
             <div className="flex items-center gap-6">
               <div className="flex items-baseline gap-3">
-                <span className="text-5xl sm:text-7xl font-bold text-gray-900 dark:text-white">
+                <span className="text-5xl sm:text-7xl font-bold text-gray-900 dark:text-white drop-shadow-lg">
                   {formatTemperature(displayWeather.temperature)}
                 </span>
-                <span className="text-2xl sm:text-3xl text-gray-600 dark:text-gray-400">°C</span>
+                <span className="text-2xl sm:text-3xl text-gray-700 dark:text-gray-300 drop-shadow-sm">°C</span>
               </div>
               
               <div className="flex items-center">
@@ -246,23 +280,23 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-6 flex flex-wrap gap-3">
               {displayWeather.humidity !== null && (
-                <div>
-                  <span className="font-medium">Humidity:</span> {displayWeather.humidity}%
-                </div>
+                <Badge variant="secondary" className="bg-transparent dark:bg-blue-900 text-blue-900 dark:text-blue-200 border-blue-700 dark:border-blue-700 text-sm px-3 py-1">
+                  Humidity: {displayWeather.humidity}%
+                </Badge>
               )}
-              <div>
-                <span className="font-medium">Wind:</span> {displayWeather.windSpeed.toFixed(1)} km/h {getWindDirection(displayWeather.windDirection)}
-              </div>
+              <Badge variant="secondary" className="bg-transparent dark:bg-blue-900 text-blue-900 dark:text-blue-200 border-blue-700 dark:border-blue-700 text-sm px-3 py-1">
+                Wind: {displayWeather.windSpeed.toFixed(1)} km/h {getWindDirection(displayWeather.windDirection)}
+              </Badge>
               {displayWeather.pressure !== null && (
-                <div>
-                  <span className="font-medium">Pressure:</span> {displayWeather.pressure} mb
-                </div>
+                <Badge variant="secondary" className="bg-transparent dark:bg-blue-900 text-blue-900 dark:text-blue-200 border-blue-700 dark:border-blue-700 text-sm px-3 py-1">
+                  Pressure: {displayWeather.pressure} mb
+                </Badge>
               )}
-              <div>
-                <span className="font-medium">Precipitation:</span> {displayWeather.precipitation && displayWeather.precipitation > 0 ? `${displayWeather.precipitation.toFixed(1)} mm` : '0 mm'}
-              </div>
+              <Badge variant="secondary" className="bg-transparent dark:bg-blue-900 text-blue-900 dark:text-blue-200 border-blue-700 dark:border-blue-700 text-sm px-3 py-1">
+                Precipitation: {displayWeather.precipitation && displayWeather.precipitation > 0 ? `${displayWeather.precipitation.toFixed(1)} mm` : '0 mm'}
+              </Badge>
             </div>
           </div>
 
