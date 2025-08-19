@@ -11,7 +11,7 @@ import { useWeatherStore } from '@/stores/weather-store';
 export function WeatherLayout() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const { loading, setSelectedDate } = useWeatherStore();
+  const { setSelectedDate } = useWeatherStore();
 
   // Ensure we're on the client side
   useEffect(() => {

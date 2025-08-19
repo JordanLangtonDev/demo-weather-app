@@ -12,9 +12,38 @@ export interface WeatherData {
 
 export function getSelectedDateWeather(
   selectedDate: string | undefined,
-  forecastData: any,
-  historyData: any,
-  currentWeather: any
+  forecastData: {
+    daily?: {
+      time: string[];
+      temperature_2m_max: number[];
+      temperature_2m_min: number[];
+      weather_code: number[];
+      wind_speed_10m_max: number[];
+      wind_direction_10m_dominant: number[];
+      precipitation_sum: number[];
+    };
+  } | null,
+  historyData: {
+    daily?: {
+      time: string[];
+      temperature_2m_max: number[];
+      temperature_2m_min: number[];
+      weather_code: number[];
+      wind_speed_10m_max: number[];
+      wind_direction_10m_dominant: number[];
+      precipitation_sum: number[];
+    };
+  } | null,
+  currentWeather: {
+    temperature_2m?: number;
+    weather_code?: number;
+    relative_humidity_2m?: number;
+    wind_speed_10m?: number;
+    wind_direction_10m?: number;
+    pressure_msl?: number;
+    precipitation?: number;
+    time?: string;
+  } | null
 ): WeatherData | null {
   if (!selectedDate || !forecastData) return null;
   
@@ -24,15 +53,15 @@ export function getSelectedDateWeather(
   if (selectedDate === todayString) {
     // Return current weather for today
     return {
-      temperature: currentWeather?.temperature_2m,
-      weatherCode: currentWeather?.weather_code,
-      humidity: currentWeather?.relative_humidity_2m,
-      windSpeed: currentWeather?.wind_speed_10m,
-      windDirection: currentWeather?.wind_direction_10m,
-      pressure: currentWeather?.pressure_msl,
-      precipitation: currentWeather?.precipitation,
+      temperature: currentWeather?.temperature_2m ?? 0,
+      weatherCode: currentWeather?.weather_code ?? 0,
+      humidity: currentWeather?.relative_humidity_2m ?? null,
+      windSpeed: currentWeather?.wind_speed_10m ?? 0,
+      windDirection: currentWeather?.wind_direction_10m ?? 0,
+      pressure: currentWeather?.pressure_msl ?? null,
+      precipitation: currentWeather?.precipitation ?? 0,
       isHistorical: false,
-      time: currentWeather?.time
+      time: currentWeather?.time ?? selectedDate
     };
   }
   

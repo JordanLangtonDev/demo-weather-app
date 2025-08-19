@@ -75,7 +75,7 @@ export function SevenDayForecast({ onDayClick }: SevenDayForecastProps) {
               day={day}
               isSelected={isToday(day.date)}
               isMobile={true}
-              currentWeather={currentWeather}
+              currentWeather={currentWeather ? { current: { is_day: currentWeather.current.is_day } } : undefined}
               onClick={handleDayClick}
             />
           ))}
@@ -89,7 +89,7 @@ export function SevenDayForecast({ onDayClick }: SevenDayForecastProps) {
               day={day}
               isSelected={isToday(day.date)}
               isMobile={false}
-              currentWeather={currentWeather}
+              currentWeather={currentWeather ? { current: { is_day: currentWeather.current.is_day } } : undefined}
               onClick={handleDayClick}
             />
           ))}

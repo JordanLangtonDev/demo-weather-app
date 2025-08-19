@@ -124,7 +124,6 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
 
     const hourlyData: HourRow[] = [];
     const now = new Date();
-    const currentHour = now.getHours();
     const isToday = selectedDate === now.toISOString().split('T')[0];
 
     // Verify that all hourly arrays have the same length
@@ -226,7 +225,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
   const getChartData = () => {
     if (!hourlyData.length) return [];
     
-    return hourlyData.map((hour, index) => ({
+    return hourlyData.map((hour) => ({
       hour: hour.time.toString().padStart(2, '0'),
       temperature: hour.temperature,
       humidity: hour.humidity,
@@ -406,8 +405,8 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Hourly Forecast</h3>
               </div>
               <div className="flex gap-4 overflow-x-auto pb-4 custom-scrollbar">
-                {hourlyData.map((hour, index) => (
-                  <div key={index} className="text-center min-w-[60px] p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
+                {hourlyData.map((hour) => (
+                  <div key={hour.time} className="text-center min-w-[60px] p-3 rounded-lg bg-gray-50 dark:bg-gray-700">
                     <div className="text-sm font-semibold text-gray-900 dark:text-white mb-3">
                       {formatTemperature(hour.temperature)}
                     </div>
@@ -438,7 +437,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
                   <Sun className="w-5 h-5 text-orange-500" />
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Temperature Trend</h3>
                 </div>
-                <Chart data={chartData} className="h-[200px]">
+                <Chart className="h-[200px]">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-600" />
                     <XAxis 
@@ -468,7 +467,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
                   <Wind className="w-5 h-5 text-blue-500" />
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">Wind Speed</div>
                 </div>
-                <Chart data={chartData} className="h-[200px]">
+                <Chart className="h-[200px]">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-600" />
                     <ChartTooltip content={<ChartTooltipContent />} />
@@ -489,7 +488,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
                   <Droplets className="w-5 h-5 text-blue-500" />
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Humidity</h3>
                 </div>
-                <Chart data={chartData} className="h-[200px]">
+                <Chart className="h-[200px]">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-600" />
                     <XAxis 
@@ -519,7 +518,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
                   <Droplets className="w-5 h-5 text-blue-500" />
                   <div className="text-lg font-semibold text-gray-900 dark:text-white">Precipitation</div>
                 </div>
-                <Chart data={chartData} className="h-[200px]">
+                <Chart className="h-[200px]">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-600" />
                     <XAxis 

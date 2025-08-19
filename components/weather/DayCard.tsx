@@ -18,7 +18,11 @@ interface DayCardProps {
   };
   isSelected: boolean;
   isMobile: boolean;
-  currentWeather?: any;
+  currentWeather?: {
+    current: {
+      is_day: number;
+    };
+  };
   onClick: (date: string) => void;
 }
 

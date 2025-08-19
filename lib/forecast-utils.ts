@@ -12,9 +12,32 @@ export interface DayData {
 }
 
 export function generateSevenDayData(
-  forecast: any,
-  historyData: any,
-  currentWeather: any
+  forecast: {
+    daily: {
+      time: string[];
+      temperature_2m_max: number[];
+      temperature_2m_min: number[];
+      weather_code: number[];
+      precipitation_sum: number[];
+      wind_speed_10m_max: number[];
+    };
+  },
+  historyData: {
+    daily: {
+      time: string[];
+      temperature_2m_max: number[];
+      temperature_2m_min: number[];
+      weather_code: number[];
+      precipitation_sum: number[];
+      wind_speed_10m_max: number[];
+    };
+  } | null,
+  currentWeather: {
+    current: {
+      weather_code: number;
+      is_day: number;
+    };
+  } | null
 ): DayData[] {
   const today = new Date();
   const todayString = today.toISOString().split('T')[0];

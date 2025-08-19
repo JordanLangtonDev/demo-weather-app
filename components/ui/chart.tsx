@@ -5,11 +5,10 @@ import { Bar, BarChart, Line, LineChart, Pie, PieChart, Cell, XAxis, YAxis, Cart
 import { cn } from "@/lib/utils"
 
 interface ChartProps extends React.HTMLAttributes<HTMLDivElement> {
-  data: any[]
   children: React.ReactElement
 }
 
-export function Chart({ data, children, className, ...props }: ChartProps) {
+export function Chart({ children, className, ...props }: ChartProps) {
   return (
     <div className={cn("h-[350px] w-full", className)} {...props}>
       <ResponsiveContainer width="100%" height="100%">
@@ -19,8 +18,8 @@ export function Chart({ data, children, className, ...props }: ChartProps) {
   )
 }
 
-export function ChartTooltip({ children, ...props }: React.ComponentProps<typeof Tooltip>) {
-  return <Tooltip {...props}>{children}</Tooltip>
+export function ChartTooltip(props: React.ComponentProps<typeof Tooltip>) {
+  return <Tooltip {...props} />
 }
 
 interface ChartTooltipContentProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -28,7 +27,13 @@ interface ChartTooltipContentProps extends React.HTMLAttributes<HTMLDivElement> 
   hideLabel?: boolean
   hideIndicator?: boolean
   indicator?: "line" | "dot" | "dashed"
-  payload?: any[]
+  payload?: Array<{
+    fill?: string
+    color?: string
+    name?: string
+    value?: string | number
+    [key: string]: string | number | undefined
+  }>
   nameKey?: string
   labelKey?: string
 }
@@ -124,7 +129,11 @@ export function ChartLegend({ children, ...props }: React.HTMLAttributes<HTMLDiv
 }
 
 interface ChartLegendContentProps extends React.HTMLAttributes<HTMLDivElement> {
-  data: any[]
+  data: Array<{
+    name?: string
+    color?: string
+    [key: string]: string | undefined
+  }>
   nameKey?: string
   colorKey?: string
 }

@@ -3,9 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { useWeatherStore } from '@/stores/weather-store';
-import { weatherAPI } from '@/lib/weather-api';
 import { locationService, LocationSuggestion } from '@/lib/location-service';
-import { useCurrentWeather, useForecast, useHistoricalWeather } from '@/lib/weather-queries';
 
 export function LocationSearch() {
 	const [searchQuery, setSearchQuery] = useState('');
