@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useWeather } from '@/contexts/WeatherContext';
+import { useWeatherStore } from '@/stores/weather-store';
 import { getWeatherIcon, formatTemperature, generateRealisticHourlyTemps } from '@/lib/weather-utils';
 import { Badge } from '@/components/ui/badge';
 import { 
@@ -21,8 +21,12 @@ interface DayDetailsDrawerProps {
 }
 
 export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) {
-  const { state } = useWeather();
-  const { forecast, history, selectedDate, currentWeather } = state;
+  const { 
+    forecast, 
+    history, 
+    selectedDate, 
+    currentWeather 
+  } = useWeatherStore();
 
   if (!selectedDate) return null;
 
@@ -55,7 +59,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
     
     // Check if it's a historical date
     if (history && history.daily && history.daily.time) {
-      const historyIndex = history.daily.time.findIndex(date => date === selectedDate);
+      const historyIndex = history.daily.time.findIndex((date: string) => date === selectedDate);
       if (historyIndex !== -1) {
         return {
           date: selectedDate,
@@ -77,7 +81,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
     
     // Check if it's a forecast date
     if (forecast && forecast.daily && forecast.daily.time) {
-      const forecastIndex = forecast.daily.time.findIndex(date => date === selectedDate);
+      const forecastIndex = forecast.daily.time.findIndex((date: string) => date === selectedDate);
       if (forecastIndex !== -1) {
         return {
           date: selectedDate,
@@ -145,7 +149,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
     // Get daily min/max for the selected date
     let dailyMin = 15, dailyMax = 20; // Default fallback
     if (forecast.daily && forecast.daily.time) {
-      const dayIndex = forecast.daily.time.findIndex(date => date === selectedDate);
+      const dayIndex = forecast.daily.time.findIndex((date: string) => date === selectedDate);
       if (dayIndex !== -1) {
         dailyMin = forecast.daily.temperature_2m_min[dayIndex];
         dailyMax = forecast.daily.temperature_2m_max[dayIndex];
@@ -467,15 +471,6 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
                 <Chart data={chartData} className="h-[200px]">
                   <LineChart data={chartData}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-gray-300 dark:stroke-gray-600" />
-                    <XAxis 
-                      dataKey="hour" 
-                      className="text-xs text-gray-600 dark:text-gray-400"
-                      tick={{ fontSize: 12 }}
-                    />
-                    <YAxis 
-                      className="text-xs text-gray-600 dark:text-gray-400"
-                      tick={{ fontSize: 12 }}
-                    />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Line 
                       type="monotone" 
@@ -522,7 +517,7 @@ export function DayDetailsDrawer({ open, onOpenChange }: DayDetailsDrawerProps) 
               <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700">
                 <div className="flex items-center gap-2 mb-4">
                   <Droplets className="w-5 h-5 text-blue-500" />
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Precipitation</h3>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-white">Precipitation</div>
                 </div>
                 <Chart data={chartData} className="h-[200px]">
                   <LineChart data={chartData}>

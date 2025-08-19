@@ -1,8 +1,7 @@
 import React from 'react'
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { WeatherProvider } from '@/contexts/WeatherContext'
-import { ThemeProvider } from '@/contexts/ThemeContext'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LocationSearch } from '@/components/weather/LocationSearch'
 import Page from '@/app/page'
 
@@ -66,6 +65,24 @@ const mockForecastData = {
   },
 }
 
+// Create a test query client
+const createTestQueryClient = () => new QueryClient({
+  defaultOptions: {
+    queries: { retry: false },
+    mutations: { retry: false },
+  },
+})
+
+// Test wrapper component
+const TestWrapper = ({ children }: { children: React.ReactNode }) => {
+  const queryClient = createTestQueryClient()
+  return (
+    <QueryClientProvider client={queryClient}>
+      {children}
+    </QueryClientProvider>
+  )
+}
+
 describe('Core Weather App Features', () => {
   beforeEach(() => {
     jest.clearAllMocks()
@@ -82,9 +99,9 @@ describe('Core Weather App Features', () => {
       mockLocationService.searchLocations.mockResolvedValue(mockLocationResults)
 
       render(
-        <WeatherProvider>
+        <TestWrapper>
           <LocationSearch />
-        </WeatherProvider>
+        </TestWrapper>
       )
 
       const searchInput = screen.getByPlaceholderText(/search for cities/i)
@@ -108,9 +125,9 @@ describe('Core Weather App Features', () => {
       mockLocationService.searchLocations.mockResolvedValue([mockLocationResults[0]])
 
       render(
-        <WeatherProvider>
+        <TestWrapper>
           <LocationSearch />
-        </WeatherProvider>
+        </TestWrapper>
       )
 
       // Search and select location
@@ -136,9 +153,9 @@ describe('Core Weather App Features', () => {
       mockLocationService.searchLocations.mockResolvedValue([mockLocationResults[0]])
 
       render(
-        <WeatherProvider>
+        <TestWrapper>
           <LocationSearch />
-        </WeatherProvider>
+        </TestWrapper>
       )
 
       // Search and select location
@@ -164,11 +181,9 @@ describe('Core Weather App Features', () => {
       // In a complete implementation, we would test clicking forecast days to open drawers
       
       render(
-        <ThemeProvider>
-          <WeatherProvider>
-            <Page />
-          </WeatherProvider>
-        </ThemeProvider>
+        <TestWrapper>
+          <Page />
+        </TestWrapper>
       )
 
       // Verify the main layout renders
@@ -190,9 +205,9 @@ describe('Core Weather App Features', () => {
       mockLocationService.searchLocations.mockResolvedValue([mockLocationResults[0]])
 
       render(
-        <WeatherProvider>
+        <TestWrapper>
           <LocationSearch />
-        </WeatherProvider>
+        </TestWrapper>
       )
 
       // 1. User searches for location

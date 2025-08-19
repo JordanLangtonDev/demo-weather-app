@@ -1,29 +1,54 @@
 'use client';
 
 import React from 'react';
-import { useWeather } from '@/contexts/WeatherContext';
+import { useWeatherStore } from '@/stores/weather-store';
 import { getWeatherIcon, formatTemperature } from '@/lib/weather-utils';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Clock, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WeatherIcon } from '@/components/ui/weather-icon';
+import { useCurrentWeather, useForecast, useHistoricalWeather } from '@/lib/weather-queries';
 
 interface CurrentWeatherProps {
   onShowDetails?: () => void;
 }
 
 export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
-  const { state } = useWeather();
-  const { currentWeather, location, selectedDate, forecast, history, loading } = state;
+  const { 
+    currentWeather, 
+    location, 
+    selectedDate, 
+    forecast, 
+    history, 
+    loading 
+  } = useWeatherStore();
 
-  const weather = currentWeather?.current;
+  // Use TanStack Query hooks when location is available
+  const currentWeatherQuery = useCurrentWeather(
+    location?.lat || 0, 
+    location?.lon || 0
+  );
+  const forecastQuery = useForecast(
+    location?.lat || 0, 
+    location?.lon || 0
+  );
+  const historicalQuery = useHistoricalWeather(
+    location?.lat || 0, 
+    location?.lon || 0, 
+    selectedDate
+  );
+
+  // Use query data if available, otherwise fall back to store data
+  const weather = currentWeatherQuery.data?.current || currentWeather?.current;
+  const forecastData = forecastQuery.data || forecast;
+  const historyData = historicalQuery.data || history;
 
   // Show loading state
-  if (loading) {
+  if (loading || (location && (currentWeatherQuery.isLoading || forecastQuery.isLoading))) {
     return (
       <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-6 md:p-8">
           <div className="animate-pulse">
             <div className="mb-6">
               <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded mb-3 w-3/4"></div>
@@ -55,7 +80,7 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
 
   // Get weather data for the selected date
   const getSelectedDateWeather = () => {
-    if (!selectedDate || !forecast) return null;
+    if (!selectedDate || !forecastData) return null;
     
     const today = new Date();
     const todayString = today.toISOString().split('T')[0];
@@ -76,17 +101,17 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
     }
     
     // Check if it's a historical date
-    if (history && history.daily && history.daily.time) {
-      const historyIndex = history.daily.time.findIndex(date => date === selectedDate);
+    if (historyData && historyData.daily && historyData.daily.time) {
+      const historyIndex = historyData.daily.time.findIndex((date: string) => date === selectedDate);
       if (historyIndex !== -1) {
         return {
-          temperature: (history.daily.temperature_2m_max[historyIndex] + history.daily.temperature_2m_min[historyIndex]) / 2,
-          weatherCode: history.daily.weather_code[historyIndex],
+          temperature: (historyData.daily.temperature_2m_max[historyIndex] + historyData.daily.temperature_2m_min[historyIndex]) / 2,
+          weatherCode: historyData.daily.weather_code[historyIndex],
           humidity: null, // Historical data doesn't include humidity
-          windSpeed: history.daily.wind_speed_10m_max[historyIndex],
-          windDirection: history.daily.wind_direction_10m_dominant[historyIndex],
+          windSpeed: historyData.daily.wind_speed_10m_max[historyIndex],
+          windDirection: historyData.daily.wind_direction_10m_dominant[historyIndex],
           pressure: null, // Historical data doesn't include pressure
-          precipitation: history.daily.precipitation_sum[historyIndex],
+          precipitation: historyData.daily.precipitation_sum[historyIndex],
           isHistorical: true,
           time: selectedDate
         };
@@ -94,17 +119,17 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
     }
     
     // Check if it's a forecast date
-    if (forecast.daily && forecast.daily.time) {
-      const forecastIndex = forecast.daily.time.findIndex(date => date === selectedDate);
+    if (forecastData.daily && forecastData.daily.time) {
+      const forecastIndex = forecastData.daily.time.findIndex((date: string) => date === selectedDate);
       if (forecastIndex !== -1) {
         return {
-          temperature: (forecast.daily.temperature_2m_max[forecastIndex] + forecast.daily.temperature_2m_min[forecastIndex]) / 2,
-          weatherCode: forecast.daily.weather_code[forecastIndex],
+          temperature: (forecastData.daily.temperature_2m_max[forecastIndex] + forecastData.daily.temperature_2m_min[forecastIndex]) / 2,
+          weatherCode: forecastData.daily.weather_code[forecastIndex],
           humidity: null, // Forecast daily data doesn't include humidity
-          windSpeed: forecast.daily.wind_speed_10m_max[forecastIndex],
-          windDirection: forecast.daily.wind_direction_10m_dominant[forecastIndex],
+          windSpeed: forecastData.daily.wind_speed_10m_max[forecastIndex],
+          windDirection: forecastData.daily.wind_direction_10m_dominant[forecastIndex],
           pressure: null, // Forecast daily data doesn't include pressure
-          precipitation: forecast.daily.precipitation_sum[forecastIndex],
+          precipitation: forecastData.daily.precipitation_sum[forecastIndex],
           isHistorical: false,
           time: selectedDate
         };
@@ -119,7 +144,7 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
   if (!currentWeather || !weather) {
     return (
       <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
-        <CardContent className="p-8">
+        <CardContent className="p-4 sm:p-6 md:p-8">
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🌤️</div>
             <h2 className="text-2xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -172,21 +197,21 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
   }
 
   return (
-    <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
-      <CardContent className="p-8">
-        <div className="flex items-start justify-between">
+          <Card className="bg-white dark:bg-gray-800 border-0 shadow-lg rounded-2xl">
+        <CardContent className="p-4 sm:p-6 md:p-8">
+        <div className="flex flex-col lg:flex-row items-start justify-between gap-6">
           <div className="flex-1">
             <div className="mb-6">
               <div className="mb-3">
-                <h1 className="text-4xl font-bold text-gray-900 dark:text-white">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
                   {location?.city || 'Unknown Location'}
                   {location?.state && (
-                    <span className="text-2xl text-gray-600 dark:text-gray-400 ml-3">, {location.state}</span>
+                    <span className="text-lg sm:text-xl md:text-2xl text-gray-600 dark:text-gray-400 ml-2 sm:ml-3">, {location.state}</span>
                   )}
                 </h1>
                 <div className="flex items-center gap-2 mt-2">
                   <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                  <span className="text-lg text-gray-600 dark:text-gray-400 font-medium">
+                  <span className="text-base sm:text-lg text-gray-600 dark:text-gray-400 font-medium">
                     {formatSelectedDate()}
                   </span>
                   {displayWeather.isHistorical && (
@@ -204,26 +229,24 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
               </div>
             </div>
 
-            <div className="flex items-center gap-12">
+            <div className="flex items-center gap-6">
               <div className="flex items-baseline gap-3">
-                <span className="text-7xl font-bold text-gray-900 dark:text-white">
+                <span className="text-5xl sm:text-7xl font-bold text-gray-900 dark:text-white">
                   {formatTemperature(displayWeather.temperature)}
                 </span>
-                <span className="text-3xl text-gray-600 dark:text-gray-400">°C</span>
+                <span className="text-2xl sm:text-3xl text-gray-600 dark:text-gray-400">°C</span>
               </div>
               
-              <div className="text-center">
-                <div className="text-7xl mb-3">
-                  <WeatherIcon 
-                    icon={getWeatherIcon(displayWeather.weatherCode.toString())} 
-                    size={80}
-                    className="mx-auto"
-                  />
-                </div>
+              <div className="flex items-center">
+                <WeatherIcon 
+                  icon={getWeatherIcon(displayWeather.weatherCode.toString())} 
+                  size={80}
+                  className="text-gray-600 dark:text-gray-400"
+                />
               </div>
             </div>
 
-            <div className="mt-6 grid grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-600 dark:text-gray-400">
               {displayWeather.humidity !== null && (
                 <div>
                   <span className="font-medium">Humidity:</span> {displayWeather.humidity}%
@@ -243,8 +266,8 @@ export function CurrentWeather({ onShowDetails }: CurrentWeatherProps) {
             </div>
           </div>
 
-          <div className="text-right text-sm text-gray-500 dark:text-gray-400">
-            <div className="flex items-center gap-2 mb-2 justify-end">
+          <div className="text-center lg:text-right text-sm text-gray-500 dark:text-gray-400 w-full lg:w-auto">
+            <div className="flex items-center gap-2 mb-2 justify-center lg:justify-end">
               <Clock className="w-4 h-4" />
               <span>{displayWeather.isHistorical ? 'Date' : 'Last updated'}</span>
             </div>

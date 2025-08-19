@@ -1,15 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useWeather } from '@/contexts/WeatherContext';
+import { useWeatherStore } from '@/stores/weather-store';
 import { formatTemperature } from '@/lib/weather-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Thermometer, Droplets, Wind, Sun } from 'lucide-react';
 
 export function AirConditions() {
-  const { state } = useWeather();
-  const { currentWeather } = state;
+  const { currentWeather } = useWeatherStore();
 
   if (!currentWeather) {
     return (
@@ -95,7 +94,7 @@ export function AirConditions() {
             <div key={index} className="flex items-center gap-3">
               <div className={`p-2 rounded-lg bg-gray-100 dark:bg-gray-700 ${condition.color}`}>
                 <condition.icon className="w-5 h-5" />
-              </div>
+                </div>
               <div>
                 <div className="text-sm text-gray-600 dark:text-gray-400">{condition.label}</div>
                 <div className="font-semibold text-gray-900 dark:text-gray-100">{condition.value}</div>

@@ -1,15 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useWeather } from '@/contexts/WeatherContext';
+import { useWeatherStore } from '@/stores/weather-store';
 import { getWeatherIcon, formatTemperature } from '@/lib/weather-utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Clock } from 'lucide-react';
 
 export function HourlyForecast() {
-  const { state } = useWeather();
-  const { forecast, selectedDate } = state;
+  const { forecast, selectedDate } = useWeatherStore();
 
   if (!forecast) {
     return (

@@ -2,9 +2,10 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import { useWeather } from '@/contexts/WeatherContext';
+import { useWeatherStore } from '@/stores/weather-store';
 import { weatherAPI } from '@/lib/weather-api';
 import { locationService, LocationSuggestion } from '@/lib/location-service';
+import { useCurrentWeather, useForecast, useHistoricalWeather } from '@/lib/weather-queries';
 
 export function LocationSearch() {
 	const [searchQuery, setSearchQuery] = useState('');
@@ -16,27 +17,30 @@ export function LocationSearch() {
 	const containerRef = useRef<HTMLDivElement | null>(null);
 	const suppressSuggestionsRef = useRef(false);
 
-	const { state, dispatch } = useWeather();
-	const { loading } = state;
+	const { 
+		loading, 
+		setLocation, 
+		setSelectedDate, 
+		setError, 
+		clearError 
+	} = useWeatherStore();
 
 	// Helper: search by free-text label (geocoding first, then weather)
 	const searchFromLabel = async (label: string) => {
-		dispatch({ type: 'SET_LOADING', payload: true });
 		try {
 			const results = await locationService.searchLocations(label, 1);
 			if (results.length > 0) {
 				await performSearchWithLocation(results[0]);
-			} else {
-				dispatch({ type: 'SET_LOADING', payload: false });
 			}
 		} catch (err) {
-			dispatch({ type: 'SET_LOADING', payload: false });
 			throw err;
 		}
 	};
 
 	// Persist and manage recent searches
 	const persistRecent = (cityLabel: string) => {
+		if (typeof window === 'undefined') return; // SSR safety
+		
 		setRecent(prev => {
 			const next = [cityLabel, ...prev.filter(c => c.toLowerCase() !== cityLabel.toLowerCase())].slice(0, 8);
 			try { localStorage.setItem('recentLocations', JSON.stringify(next)); } catch {}
@@ -45,47 +49,22 @@ export function LocationSearch() {
 	};
 
 	const performSearchWithLocation = async (loc: LocationSuggestion) => {
-		dispatch({ type: 'SET_LOADING', payload: true });
-		dispatch({ type: 'SET_ERROR', payload: null });
+		clearError();
 		try {
-			// Update location in context
-			dispatch({
-				type: 'SET_LOCATION',
-				payload: {
-					city: loc.name,
-					state: loc.region,
-					country: loc.country,
-					lat: loc.lat,
-					lon: loc.lon,
-				}
-			});
-
-			// Current weather
-			const currentWeather = await weatherAPI.getCurrentWeather(loc.lat, loc.lon);
-			dispatch({ type: 'SET_CURRENT_WEATHER', payload: currentWeather });
-
-			// Forecast (8 days to ensure we get 3 forecast days after excluding today)
-			const forecast = await weatherAPI.getForecast(loc.lat, loc.lon, 8);
-			dispatch({ type: 'SET_FORECAST', payload: forecast });
-
-			// Historical weather (past 3 days)
-			const endDate = new Date();
-			endDate.setDate(endDate.getDate() - 1); // Yesterday
-			const startDate = new Date();
-			startDate.setDate(startDate.getDate() - 3); // 3 days ago
-			
-			const historicalWeather = await weatherAPI.getHistoricalWeather(
-				loc.lat, 
-				loc.lon, 
-				startDate.toISOString().split('T')[0], 
-				endDate.toISOString().split('T')[0]
-			);
-			dispatch({ type: 'SET_HISTORY', payload: historicalWeather });
+			// Update location in store
+			const location = {
+				city: loc.name,
+				state: loc.region,
+				country: loc.country,
+				lat: loc.lat,
+				lon: loc.lon,
+			};
+			setLocation(location);
 
 			// Selected date = today
 			const today = new Date();
 			const dateString = today.toISOString().split('T')[0];
-			dispatch({ type: 'SET_SELECTED_DATE', payload: dateString });
+			setSelectedDate(dateString);
 
 			// Save to recent
 			const label = [loc.name, loc.region].filter(Boolean).join(', ');
@@ -94,9 +73,8 @@ export function LocationSearch() {
 			console.error('Search failed:', error);
 			let errorMessage = 'Unable to fetch weather for this location.';
 			if (error instanceof Error) errorMessage = error.message;
-			dispatch({ type: 'SET_ERROR', payload: errorMessage });
+			setError(errorMessage);
 		} finally {
-			dispatch({ type: 'SET_LOADING', payload: false });
 			// Re-enable suggestions after this selection cycle
 			suppressSuggestionsRef.current = false;
 		}
@@ -199,6 +177,8 @@ export function LocationSearch() {
 
 	// Load recent and outside click handler
 	useEffect(() => {
+		if (typeof window === 'undefined') return; // SSR safety
+		
 		try {
 			const stored = localStorage.getItem('recentLocations');
 			if (stored) setRecent(JSON.parse(stored));
@@ -224,7 +204,7 @@ export function LocationSearch() {
 					onChange={(e) => setSearchQuery(e.target.value)}
 					onKeyDown={handleKeyDown}
 					onFocus={handleFocus}
-					className="h-12 md:h-12 w-full rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder-gray-400 shadow-inner focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 pr-12"
+					className="h-12 md:h-12 w-full rounded-xl md:rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 shadow-inner focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:border-blue-500 pr-12"
 				/>
 
 				{/* Loading indicator for suggestions and searches */}
